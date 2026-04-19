@@ -33,7 +33,8 @@ import java.util.stream.Collectors;
 @Configuration
 @EnableScheduling
 @MapperScan(basePackageClasses = SecureInvokeRecordMapper.class)
-@Import({SecureInvokeAspect.class, SecureInvokeRecordDao.class})
+// 事务补偿能力和 RabbitMQ 基础设施一起自动装配，业务模块只需注入 MQProducer。
+@Import({SecureInvokeAspect.class, SecureInvokeRecordDao.class, RabbitMqConfiguration.class})
 public class TransactionAutoConfiguration {
 
     @Nullable

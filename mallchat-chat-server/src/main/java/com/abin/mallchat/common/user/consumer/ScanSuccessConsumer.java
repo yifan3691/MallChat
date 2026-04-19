@@ -1,11 +1,8 @@
 package com.abin.mallchat.common.user.consumer;
 
-import com.abin.mallchat.common.common.constant.MQConstant;
 import com.abin.mallchat.common.common.domain.dto.ScanSuccessMessageDTO;
 import com.abin.mallchat.common.user.service.WebSocketService;
-import org.apache.rocketmq.spring.annotation.MessageModel;
-import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -14,13 +11,13 @@ import org.springframework.stereotype.Component;
  * Author: <a href="https://github.com/zongzibinbin">abin</a>
  * Date: 2023-08-12
  */
-@RocketMQMessageListener(consumerGroup = MQConstant.SCAN_MSG_GROUP, topic = MQConstant.SCAN_MSG_TOPIC, messageModel = MessageModel.BROADCASTING)
 @Component
-public class ScanSuccessConsumer implements RocketMQListener<ScanSuccessMessageDTO> {
+public class ScanSuccessConsumer {
     @Autowired
     private WebSocketService webSocketService;
 
-    @Override
+    // 扫码成功事件广播到所有实例，用本地 code 匹配等待授权的 WebSocket 连接。
+    @RabbitListener(queues = "#{scanMsgQueue.name}")
     public void onMessage(ScanSuccessMessageDTO scanSuccessMessageDTO) {
         webSocketService.scanSuccess(scanSuccessMessageDTO.getCode());
     }

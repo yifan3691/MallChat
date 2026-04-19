@@ -1,11 +1,8 @@
 package com.abin.mallchat.common.user.consumer;
 
-import com.abin.mallchat.common.common.constant.MQConstant;
 import com.abin.mallchat.common.common.domain.dto.LoginMessageDTO;
 import com.abin.mallchat.common.user.service.WebSocketService;
-import org.apache.rocketmq.spring.annotation.MessageModel;
-import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -14,13 +11,13 @@ import org.springframework.stereotype.Component;
  * Author: <a href="https://github.com/zongzibinbin">abin</a>
  * Date: 2023-08-12
  */
-@RocketMQMessageListener(consumerGroup = MQConstant.LOGIN_MSG_GROUP, topic = MQConstant.LOGIN_MSG_TOPIC, messageModel = MessageModel.BROADCASTING)
 @Component
-public class MsgLoginConsumer implements RocketMQListener<LoginMessageDTO> {
+public class MsgLoginConsumer {
     @Autowired
     private WebSocketService webSocketService;
 
-    @Override
+    // 登录成功事件需要广播，只有持有对应扫码连接的实例会真正完成登录。
+    @RabbitListener(queues = "#{loginMsgQueue.name}")
     public void onMessage(LoginMessageDTO loginMessageDTO) {
         //尝试登录登录
         webSocketService.scanLoginSuccess(loginMessageDTO.getCode(), loginMessageDTO.getUid());

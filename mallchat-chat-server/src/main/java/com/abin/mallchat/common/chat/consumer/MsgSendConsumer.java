@@ -15,14 +15,13 @@ import com.abin.mallchat.common.chat.service.cache.GroupMemberCache;
 import com.abin.mallchat.common.chat.service.cache.HotRoomCache;
 import com.abin.mallchat.common.chat.service.cache.RoomCache;
 import com.abin.mallchat.common.chatai.service.IChatAIService;
-import com.abin.mallchat.common.common.constant.MQConstant;
 import com.abin.mallchat.common.common.domain.dto.MsgSendMessageDTO;
 import com.abin.mallchat.common.user.service.WebSocketService;
 import com.abin.mallchat.common.user.service.adapter.WSAdapter;
 import com.abin.mallchat.common.user.service.cache.UserCache;
 import com.abin.mallchat.common.user.service.impl.PushService;
-import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.apache.rocketmq.spring.core.RocketMQListener;
+import com.abin.mallchat.transaction.constant.RabbitMqConstant;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -37,9 +36,8 @@ import java.util.Objects;
  * Author: <a href="https://github.com/zongzibinbin">abin</a>
  * Date: 2023-08-12
  */
-@RocketMQMessageListener(consumerGroup = MQConstant.SEND_MSG_GROUP, topic = MQConstant.SEND_MSG_TOPIC)
 @Component
-public class MsgSendConsumer implements RocketMQListener<MsgSendMessageDTO> {
+public class MsgSendConsumer {
     @Autowired
     private WebSocketService webSocketService;
     @Autowired
@@ -69,7 +67,8 @@ public class MsgSendConsumer implements RocketMQListener<MsgSendMessageDTO> {
     @Autowired
     private PushService pushService;
 
-    @Override
+    // chat_send_msg 使用共享队列，多实例部署时同一条消息只由一个实例做会话后置处理。
+    @RabbitListener(queues = RabbitMqConstant.SEND_MSG_QUEUE)
     public void onMessage(MsgSendMessageDTO dto) {
         Message message = messageDao.getById(dto.getMsgId());
         Room room = roomCache.get(message.getRoomId());
